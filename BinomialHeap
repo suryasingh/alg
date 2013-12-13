@@ -1,0 +1,152 @@
+//code for binomial heap....
+#include<stdio.h>
+#include<stdlib.h>
+
+typedef struct node_{
+    struct node_ *parent;
+    struct node_ *child;
+    struct node_ *sibling;
+    int key;
+    int degree;
+}node;
+
+typedef struct bin_{
+    int size;
+    node * tree;
+}bin;
+
+node * binomial_tree;
+
+int a[40],b[40] ;
+int lengthOfBin,arryaLen,consumed;
+void binary(int m){
+    int remain;
+    int num = m;
+    lengthOfBin=0;
+    while(num>=1){
+        remain = num % 2;
+        a[lengthOfBin++]=remain;
+        num=num/2;
+    }
+}
+
+void heap(node * p){
+    int min,t;
+    node *temp;
+    node *cur;
+    if (p->child == NULL) {
+        return;
+    }
+    min = p->child->key;
+    temp = p->child;
+    for (cur = p->child; cur!=NULL; cur = cur->sibling) {
+        if (cur->key<min) {
+            min = cur->key;
+            temp = cur;
+        }
+    }
+    if (min<p->key) {
+    t = p->key;
+    p->key = min;
+    temp->key = t;
+    for (cur = p; cur!=NULL; cur = cur->parent) {
+        if (cur->parent == NULL) {
+            break;
+        }
+        if (cur->key<cur->parent->key) {
+            t = cur->parent->key;
+            cur->parent->key = cur->key;
+            cur->key = t;
+        }
+    }
+    }
+    for (cur = p->child; cur!=NULL; cur = cur->sibling) {
+        heap(cur);
+    }
+    
+    
+}
+void createBinomialTree(node * p){
+    node * temp;
+    node * head=NULL;
+    node *cur;
+    int i,deg=(p->degree)-1;
+    if (p->degree == 0) {
+        return;
+    }
+    //printf("%d",deg);
+    //binary(arryaLen);
+    for (i=0; i<p->degree;i++) {
+            temp = (node*)malloc(sizeof(node));
+            temp->key = b[consumed++];
+            temp->degree = deg;
+            temp->parent = NULL;
+            temp->child = NULL;
+            temp->sibling = NULL;
+        temp->parent = p;
+            if (head == NULL) {
+                head = temp;
+                cur = temp;
+            }else{
+                cur->sibling = temp;
+                cur = temp;
+            }
+        deg--;
+    }
+    p->child = head;
+    for (temp = head; temp!=NULL; temp = temp->sibling) {
+        createBinomialTree(temp);
+    }
+}
+
+void buildBinomialTree(){
+    node * temp;
+    node * head =NULL;
+    node *cur;
+    int i,deg=0;
+    binary(arryaLen);
+    for (i=0; i<lengthOfBin; i++) {
+        if (a[i] == 1) {
+            temp = (node*)malloc(sizeof(node));
+            temp->key = b[consumed++];
+            temp->degree = deg;
+            temp->parent = NULL;
+            temp->child = NULL;
+            temp->sibling = NULL;
+            if (head == NULL) {
+                head = temp;
+                cur = temp;
+            }else{
+                cur->sibling = temp;
+                cur = temp;
+            }
+        }
+        deg++;
+    }
+    for (temp = head; temp!=NULL; temp = temp->sibling) {
+        cur = temp;
+        createBinomialTree(temp);
+        heap(cur);
+    }
+    binomial_tree =head;
+    
+}
+
+int main(){
+   // int b[50];
+    int i;
+    node *temp1,*temp2;
+    printf("enter the number of elements\n");
+    scanf("%d",&arryaLen);
+    printf("enter the elements");
+    for (i=0; i<arryaLen; i++) {
+        scanf("%d",&b[i]);
+    }
+    buildBinomialTree();
+    for (temp1 = binomial_tree; temp1!=NULL; temp1 = temp1->sibling) {
+        printf("root : :%d\t%d\n",temp1->key,temp1->degree);
+        for (temp2 = temp1->child; temp2!=NULL; temp2 = temp2->sibling) {
+           printf("%d\t%d\n",temp2->key,temp2->degree);
+        }
+    }
+}

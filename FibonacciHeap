@@ -1,0 +1,238 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define MAX_VAL 10
+typedef struct node_{
+    int value;
+    int mark;//0 not marked,1 marked
+    int degree;//number of childern
+    struct node_ *parent;
+    struct node_ *child;
+    struct node_ *left;
+    struct node_ *right;
+    
+}node;
+
+typedef struct heap_{
+    int min;
+    node * list;
+}heap;
+
+node * rank[MAX_VAL];
+
+heap * insert(int item,heap * k){
+    node * temp;
+    heap *h = k;
+    temp = (node *)malloc(sizeof(node));
+    if (temp==NULL) {
+        perror("unable to allocate memory\n");
+    }
+    temp->value = item;
+    temp->degree = 0;
+    temp->parent = NULL;
+    temp->left =NULL;
+    temp->right = NULL;
+    temp->child =  NULL;
+    temp->mark = 0;
+    if (h->list==NULL) {
+        h->list = temp;
+        h->min = item;
+        temp->left =temp;
+        temp->right = temp;
+    }else{
+        temp->right = h->list;
+        temp->left = h->list->left;
+        h->list->left->right = temp;
+        h->list->left = temp;
+        if (h->min > item) {
+            h->list = temp;
+            h->min = item;
+        }
+    }
+    return h;
+}
+
+heap * findmin(node *t,heap * p){
+    node * temp,*it;
+    int min = t->value;
+    temp = t;
+    for (it = t->left;it!=t ; it=it->left) {
+        if (it->value < min) {
+            min = it->value;
+            temp = it;
+        }
+    }
+    p->list = temp;
+    p->min = min;
+    return p;
+    
+}
+
+int callength(const heap *h){
+    int len =0;
+    node * temp;
+    //printf("%d",h->min);
+    if (h->list!=NULL) {
+        len++;
+    }
+    for (temp=h->list->right; temp !=h->list; temp=temp->right) {
+        len++;
+    }
+    
+    return len;
+}
+
+heap *consolidate(heap * h){
+    int deg,len,i=0,j;
+    node * cur,*temp,*temp2;
+    cur = h->list;
+    len = callength(h);
+    for (j=0; j<MAX_VAL; j++) {
+        rank[j] = NULL;
+    }
+    //rank[h->list->degree] =h->list;
+    while (i!=len) {
+        while(rank[cur->degree]!=NULL) {
+            temp = rank[cur->degree];
+            deg = cur->degree;
+            temp->left->right = temp->right;
+            temp->right->left =temp->left;
+            temp->right =temp;
+            temp->left =temp;
+            if (cur->value < temp->value) {
+                temp->parent = cur;
+                if (cur->child!=NULL) {
+                    
+                    temp->right = cur->child;
+                    temp->left = cur->child->left;
+                    cur->child->left->right = temp;
+                    cur->child->left = temp;
+                    
+                }else{
+                    temp->left =temp;
+                    temp->right =temp;
+                }
+                cur->child = temp;
+                cur->degree++;
+                printf("hii");
+            }else{
+                if (cur->left!=cur) {
+                    
+                    temp2 = cur->left;
+                    cur->left->right = cur->right;
+                    cur->right->left =cur->left;
+                    temp->right = temp2->right;
+                    temp->left = temp2;
+                    temp2->right->left = temp;
+                    temp2->right = temp;
+                }
+                cur->parent = temp;
+                if (temp->child!=NULL) {
+                    
+                    cur->right = temp->child;
+                    cur->left = temp->child->left;
+                    temp->child->left->right = cur;
+                    temp->child->left = cur;
+                }else{
+                    cur->right = cur;
+                    cur->left =cur;
+                }
+                temp->child = cur;
+                temp->degree++;
+                cur =temp;
+                printf("hii");
+            }
+            rank[deg] = NULL;
+        }
+        rank[cur->degree] = cur;
+        cur = cur->right;
+        i++;
+        
+    }
+    printf("hii");
+    //h->list =cur;
+    h=findmin(cur,h);
+    return h;
+    
+}
+
+
+
+heap *delmin(heap * k){
+    int i;
+    node * temp;
+    heap * h = k;
+    if (h->list == NULL) {
+        perror("no element \n");
+        exit(0);
+    }
+    if (h->list->child!=NULL) {
+        temp = h->list->child;
+        if (h->list->left == h->list) {
+            for (i=0; i< h->list->degree; i++) {
+                temp->parent =NULL;
+            }
+        }else{
+        for (i=0; i< h->list->degree; i++) {
+            if (i==0) {
+                temp->left = h->list->left;
+                h->list->left->right = temp;
+            }
+            temp->parent =NULL;
+            if (i==(h->list->degree-1)) {
+                temp->right =h->list->right;
+                h->list->right->left = temp;
+            }
+        }
+        }
+    }else{
+        temp = h->list->left;
+        temp->right = h->list->right;
+        h->list->right->left = temp;
+    }
+    free(h->list);
+    h=findmin(temp,h);
+    h = consolidate(h);
+    return h;
+}
+
+void traversal(const heap * h){
+    node * temp;
+    printf("%d",h->min);
+    for (temp=h->list->right; temp !=h->list; temp=temp->right) {
+        printf(" -> %d",temp->value);
+    }
+}
+
+int main(){
+    int i,n,choice,min,len;
+    heap * h;
+    h = (heap *)malloc(sizeof(heap));
+    h->min = 0;
+    h->list =NULL;
+    while (1) {
+        printf("\nenter 1 to insert\nenter 2 to del min\nenter 3 for traversal\nenter 4 to get min\nenter 5 to quit\n");
+        printf("enter your choice..\n");
+        scanf("%d",&choice);
+        switch (choice) {
+            case 1:
+                printf("enter the item to be inserted\n");
+                scanf("%d",&n);
+                h = insert(n,h);
+                len = callength(h);
+                printf("len=%d",len);
+                break;
+            case 2:
+                h = delmin(h);
+                break;
+            case 3:
+                traversal(h);
+                break;
+            case 4:
+                printf("minimum element is %d\n",h->min);
+                break;
+            default:
+                exit(0);
+        }
+    }
+}
+
